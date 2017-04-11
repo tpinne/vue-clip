@@ -191,6 +191,7 @@ component.methods.bindEvents = function () {
   this.uploader.on('addedfile', this.addedFile.bind(this))
   this.uploader.on('removedfile', this.removedFile.bind(this))
   this.uploader.on('sending', this.sending.bind(this))
+  this.uploader.on('processing', this.processing.bind(this))
   this.uploader.on('complete', this.complete.bind(this))
   this.uploader.on('error', this.error.bind(this))
   this.uploader.on('uploadprogress', this.uploadProgress.bind(this))
@@ -261,6 +262,14 @@ component.methods.removedFile = function ({ blobId }) {
 component.methods.sending = function ({ blobId }, xhr, formData) {
   const fileInstance = this.getFile(blobId)
   this.onSending(fileInstance, xhr, formData)
+}
+
+/**
+ * Listens for processing event
+ */
+component.methods.processing = function ({ blobId, status }) {
+  const fileInstance = this.getFile(blobId)
+  fileInstance.updateStatus(status)
 }
 
 /**
@@ -420,6 +429,13 @@ component.methods.removeAllFiles = function (cancelQueued) {
  */
 component.methods.cleanupMessage = function (message) {
   return message.replace(/{{\s*?(\w+)\s*?}}/g, (match, group) => `{{${group}}}`)
+}
+
+/**
+ * Processes the queue
+ */
+component.methods.processQueue = function () {
+  this.uploader.processQueue()
 }
 
 export default component

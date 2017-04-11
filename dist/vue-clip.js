@@ -808,7 +808,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        message = _options$maxFiles.message;
 	
 	    options.maxFiles = limit;
-	    options.dictMaxFilesExceeded = message;
+	    options.dictMaxFilesExceeded = this.cleanupMessage(message);
 	  }
 	
 	  if (typeof options.maxFilesize !== 'undefined' && options.maxFilesize instanceof Object === true) {
@@ -817,7 +817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _message = _options$maxFilesize.message;
 	
 	    options.maxFilesize = _limit;
-	    options.dictFileTooBig = _message;
+	    options.dictFileTooBig = this.cleanupMessage(_message);
 	  }
 	
 	  if (typeof options.acceptedFiles !== 'undefined' && options.acceptedFiles instanceof Object === true && options.acceptedFiles instanceof Array === false) {
@@ -826,7 +826,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _message2 = _options$acceptedFile.message;
 	
 	    options.acceptedFiles = extensions.join(',');
-	    options.dictInvalidFileType = _message2;
+	    options.dictInvalidFileType = this.cleanupMessage(_message2);
 	  }
 	
 	  /**
@@ -850,6 +850,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.uploader.on('addedfile', this.addedFile.bind(this));
 	  this.uploader.on('removedfile', this.removedFile.bind(this));
 	  this.uploader.on('sending', this.sending.bind(this));
+	  this.uploader.on('processing', this.processing.bind(this));
 	  this.uploader.on('complete', this.complete.bind(this));
 	  this.uploader.on('error', this.error.bind(this));
 	  this.uploader.on('uploadprogress', this.uploadProgress.bind(this));
@@ -927,16 +928,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	/**
+	 * Listens for processing event
+	 */
+	component.methods.processing = function (_ref4) {
+	  var blobId = _ref4.blobId,
+	      status = _ref4.status;
+	
+	  var fileInstance = this.getFile(blobId);
+	  fileInstance.updateStatus(status);
+	};
+	
+	/**
 	 * Updates the file status on completion
 	 *
 	 * @param  {Symbol} options.blobId
 	 * @param  {String} options.status
 	 */
-	component.methods.complete = function (_ref4) {
-	  var blobId = _ref4.blobId,
-	      status = _ref4.status,
-	      _ref4$xhr = _ref4.xhr,
-	      xhr = _ref4$xhr === undefined ? {} : _ref4$xhr;
+	component.methods.complete = function (_ref5) {
+	  var blobId = _ref5.blobId,
+	      status = _ref5.status,
+	      _ref5$xhr = _ref5.xhr,
+	      xhr = _ref5$xhr === undefined ? {} : _ref5$xhr;
 	
 	  var fileInstance = this.getFile(blobId);
 	  fileInstance.updateStatus(status);
@@ -956,9 +968,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param  {String} options.status
 	 * @param  {String} errorMessage
 	 */
-	component.methods.error = function (_ref5, errorMessage) {
-	  var blobId = _ref5.blobId,
-	      status = _ref5.status;
+	component.methods.error = function (_ref6, errorMessage) {
+	  var blobId = _ref6.blobId,
+	      status = _ref6.status;
 	
 	  var fileInstance = this.getFile(blobId);
 	  fileInstance.updateStatus(status);
@@ -972,8 +984,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param  {Number} progress
 	 * @param  {Number} bytesSent
 	 */
-	component.methods.uploadProgress = function (_ref6, progress, bytesSent) {
-	  var blobId = _ref6.blobId;
+	component.methods.uploadProgress = function (_ref7, progress, bytesSent) {
+	  var blobId = _ref7.blobId;
 	
 	  var fileInstance = this.getFile(blobId);
 	  fileInstance.updateProgress(progress);
@@ -986,8 +998,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param  {Symbol} options.blobId
 	 * @param  {String} dataUrl
 	 */
-	component.methods.thumbnail = function (_ref7, dataUrl) {
-	  var blobId = _ref7.blobId;
+	component.methods.thumbnail = function (_ref8, dataUrl) {
+	  var blobId = _ref8.blobId;
 	
 	  var fileInstance = this.getFile(blobId);
 	  fileInstance.updateDataUrl(dataUrl);
@@ -1054,8 +1066,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {Symbol} blobId
 	 *
 	 */
-	component.methods.maxFilesExceeded = function (_ref8) {
-	  var blobId = _ref8.blobId;
+	component.methods.maxFilesExceeded = function (_ref9) {
+	  var blobId = _ref9.blobId;
 	
 	  var fileInstance = this.getFile(blobId);
 	  this.onMaxFiles(fileInstance);
@@ -1087,6 +1099,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	component.methods.removeAllFiles = function (cancelQueued) {
 	  this.uploader.removeAllFiles(cancelQueued);
+	};
+	
+	/**
+	 * Cleans up message by removing spaces within the curly braces
+	 *
+	 * @param  {String}       message
+	 * @return {String}
+	 */
+	component.methods.cleanupMessage = function (message) {
+	  return message.replace(/{{\s*?(\w+)\s*?}}/g, function (match, group) {
+	    return '{{' + group + '}}';
+	  });
+	};
+	
+	/**
+	 * Processes the queue
+	 */
+	component.methods.processQueue = function () {
+	  this.uploader.processQueue();
 	};
 	
 	exports.default = component;
@@ -1883,9 +1914,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    /*
 	    This is a list of all available events you can register on a dropzone object.
-	
+	    
 	    You can register an event handler like this:
-	
+	    
 	        dropzone.on("dragEnter", function() { });
 	     */
 	
@@ -2171,7 +2202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      maxfilesreached: noop,
 	      queuecomplete: noop,
 	      addedfiles: noop,
-	      previewTemplate: ""
+	      previewTemplate: "<div class=\"dz-preview dz-file-preview\">\n  <div class=\"dz-image\"><img data-dz-thumbnail /></div>\n  <div class=\"dz-details\">\n    <div class=\"dz-size\"><span data-dz-size></span></div>\n    <div class=\"dz-filename\"><span data-dz-name></span></div>\n  </div>\n  <div class=\"dz-progress\"><span class=\"dz-upload\" data-dz-uploadprogress></span></div>\n  <div class=\"dz-error-message\"><span data-dz-errormessage></span></div>\n  <div class=\"dz-success-mark\">\n    <svg width=\"54px\" height=\"54px\" viewBox=\"0 0 54 54\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:sketch=\"http://www.bohemiancoding.com/sketch/ns\">\n      <title>Check</title>\n      <defs></defs>\n      <g id=\"Page-1\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\" sketch:type=\"MSPage\">\n        <path d=\"M23.5,31.8431458 L17.5852419,25.9283877 C16.0248253,24.3679711 13.4910294,24.366835 11.9289322,25.9289322 C10.3700136,27.4878508 10.3665912,30.0234455 11.9283877,31.5852419 L20.4147581,40.0716123 C20.5133999,40.1702541 20.6159315,40.2626649 20.7218615,40.3488435 C22.2835669,41.8725651 24.794234,41.8626202 26.3461564,40.3106978 L43.3106978,23.3461564 C44.8771021,21.7797521 44.8758057,19.2483887 43.3137085,17.6862915 C41.7547899,16.1273729 39.2176035,16.1255422 37.6538436,17.6893022 L23.5,31.8431458 Z M27,53 C41.3594035,53 53,41.3594035 53,27 C53,12.6405965 41.3594035,1 27,1 C12.6405965,1 1,12.6405965 1,27 C1,41.3594035 12.6405965,53 27,53 Z\" id=\"Oval-2\" stroke-opacity=\"0.198794158\" stroke=\"#747474\" fill-opacity=\"0.816519475\" fill=\"#FFFFFF\" sketch:type=\"MSShapeGroup\"></path>\n      </g>\n    </svg>\n  </div>\n  <div class=\"dz-error-mark\">\n    <svg width=\"54px\" height=\"54px\" viewBox=\"0 0 54 54\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:sketch=\"http://www.bohemiancoding.com/sketch/ns\">\n      <title>Error</title>\n      <defs></defs>\n      <g id=\"Page-1\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\" sketch:type=\"MSPage\">\n        <g id=\"Check-+-Oval-2\" sketch:type=\"MSLayerGroup\" stroke=\"#747474\" stroke-opacity=\"0.198794158\" fill=\"#FFFFFF\" fill-opacity=\"0.816519475\">\n          <path d=\"M32.6568542,29 L38.3106978,23.3461564 C39.8771021,21.7797521 39.8758057,19.2483887 38.3137085,17.6862915 C36.7547899,16.1273729 34.2176035,16.1255422 32.6538436,17.6893022 L27,23.3431458 L21.3461564,17.6893022 C19.7823965,16.1255422 17.2452101,16.1273729 15.6862915,17.6862915 C14.1241943,19.2483887 14.1228979,21.7797521 15.6893022,23.3461564 L21.3431458,29 L15.6893022,34.6538436 C14.1228979,36.2202479 14.1241943,38.7516113 15.6862915,40.3137085 C17.2452101,41.8726271 19.7823965,41.8744578 21.3461564,40.3106978 L27,34.6568542 L32.6538436,40.3106978 C34.2176035,41.8744578 36.7547899,41.8726271 38.3137085,40.3137085 C39.8758057,38.7516113 39.8771021,36.2202479 38.3106978,34.6538436 L32.6568542,29 Z M27,53 C41.3594035,53 53,41.3594035 53,27 C53,12.6405965 41.3594035,1 27,1 C12.6405965,1 1,12.6405965 1,27 C1,41.3594035 12.6405965,53 27,53 Z\" id=\"Oval-2\" sketch:type=\"MSShapeGroup\"></path>\n        </g>\n      </g>\n    </svg>\n  </div>\n</div>"
 	    };
 	
 	    extend = function() {
@@ -3433,7 +3464,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	  /*
-	
+	  
 	  Bugfix for iOS 6 and 7
 	  Source: http://stackoverflow.com/questions/11929099/html5-canvas-drawimage-ratio-bug-ios
 	  based on the work of https://github.com/stomita/ios-imagefile-megapixel
